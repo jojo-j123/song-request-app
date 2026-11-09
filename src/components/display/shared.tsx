@@ -23,18 +23,31 @@ const supportsZoom = () => typeof CSS !== 'undefined' && CSS.supports?.('zoom', 
  * exhausts iPhone memory ("A problem repeatedly occurred"). `zoom` sizes those layers to what is
  * actually on screen.
  */
+const fitScale = () =>
+  typeof window === 'undefined' ? 1 : Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+
 export function Stage({ children }: { children: ReactNode }) {
-  const [scale, setScale] = useState(1);
+  // Compute the zoom BEFORE first paint: Safari does not recompute descendants' font sizes when
+  // `zoom` changes after initial style resolution (boxes shrink, text stays big).
+  const [scale, setScale] = useState(fitScale);
   const [useZoom] = useState(supportsZoom);
   useLayoutEffect(() => {
-    const fit = () => setScale(Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H));
-    fit();
+    let t: ReturnType<typeof setTimeout>;
+    const fit = () => {
+      clearTimeout(t);
+      t = setTimeout(() => setScale(fitScale()), 150); // debounce rotation / resize
+    };
     window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', fit);
+    };
   }, []);
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-black">
       <div
+        // Re-key on zoom change so Safari re-resolves every descendant's font size.
+        key={useZoom ? scale.toFixed(4) : 'stage'}
         className="stage relative shrink-0 overflow-hidden bg-ink"
         data-lite={isAppleMobile() ? '1' : undefined}
         style={
