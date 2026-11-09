@@ -355,10 +355,16 @@ begin
   update event_settings set voting_round = 1 where event_id = p_event_id;
 end $$;
 
-revoke all on function public.admin_reorder(text, uuid[]) from anon;
-revoke all on function public.admin_set_playing(text, uuid) from anon;
-revoke all on function public.admin_reset_event(text, boolean) from anon;
-revoke all on function public.admin_reset_rounds(text) from anon;
+-- Postgres grants EXECUTE to PUBLIC by default: lock admin helpers to signed-in users only
+revoke all on function public.admin_reorder(text, uuid[]) from public, anon;
+revoke all on function public.admin_set_playing(text, uuid) from public, anon;
+revoke all on function public.admin_reset_event(text, boolean) from public, anon;
+revoke all on function public.admin_reset_rounds(text) from public, anon;
+grant execute on function public.admin_reorder(text, uuid[]) to authenticated;
+grant execute on function public.admin_set_playing(text, uuid) to authenticated;
+grant execute on function public.admin_reset_event(text, boolean) to authenticated;
+grant execute on function public.admin_reset_rounds(text) to authenticated;
+revoke all on function public.tg_events_settings() from public, anon, authenticated;
 grant execute on function public.submit_request(text,text,text,text,text,text,text,text,text) to anon, authenticated;
 grant execute on function public.cast_vote(text,uuid,text,uuid) to anon, authenticated;
 grant execute on function public.register_guest(text,text) to anon, authenticated;
