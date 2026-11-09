@@ -109,7 +109,7 @@ await admin.getByRole('button', { name: /^Start$/ }).click();
 await admin.getByRole('button', { name: '4×' }).click();
 await wait(9000);
 // turn off the simulated DJ so screenshots aren't hijacked by auto reveals
-await admin.getByRole('switch').nth(1).click();
+await admin.getByRole('switch', { name: 'Simulated DJ' }).click();
 const demoCount = await admin.evaluate((id) => JSON.parse(localStorage.getItem('encore:event:' + id)).requests.filter((r) => r.isDemo).length, eventId);
 ok(demoCount >= 30, 'demo seeded requests: ' + demoCount);
 await admin.screenshot({ path: `${OUT}/admin-demo.png` });
@@ -166,7 +166,7 @@ await dj.screenshot({ path: `${OUT}/dj-tablet.png` });
 
 console.log('13. Pause submissions blocks guests');
 await admin.getByRole('button', { name: /^Settings$/ }).first().click();
-await admin.getByRole('switch').first().click();
+await admin.getByRole('switch', { name: 'Accept requests' }).click();
 await wait(500);
 await g.bringToFront();
 await g.getByRole('button', { name: /^Request/ }).first().click();

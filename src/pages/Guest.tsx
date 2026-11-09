@@ -94,17 +94,17 @@ export default function Guest() {
           ))}
         </nav>
 
-        <AnimatePresence mode="wait">
-          {tab === 'request' ? (
-            <motion.div key="req" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <RequestFlow backend={backend!} snap={snap} guestId={guestId} onGoVote={() => setTab('vote')} />
-            </motion.div>
-          ) : (
-            <motion.div key="vote" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-              <Community backend={backend!} snap={snap} guestId={guestId} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* No exit animation on purpose: a tab switch must never depend on an animation finishing
+            (backgrounded phones throttle rAF, which previously left a blank screen). */}
+        {tab === 'request' ? (
+          <motion.div key="req" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}>
+            <RequestFlow backend={backend!} snap={snap} guestId={guestId} onGoVote={() => setTab('vote')} />
+          </motion.div>
+        ) : (
+          <motion.div key="vote" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}>
+            <Community backend={backend!} snap={snap} guestId={guestId} />
+          </motion.div>
+        )}
       </div>
     </div>
   );
@@ -610,7 +610,7 @@ function Community({ backend, snap, guestId }: { backend: Backend; snap: EventSn
       </div>
 
       {leader && (
-        <motion.div layout className="neon-border relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/25 via-magenta/15 to-transparent p-4">
+        <motion.div layout className="neon-border relative rounded-3xl bg-gradient-to-br from-primary/25 via-magenta/15 to-transparent p-4">
           <div className="flex items-center gap-4">
             <Artwork url={leader.artworkUrl} seed={leader.songTitle} className="h-20 w-20" />
             <div className="min-w-0 flex-1">

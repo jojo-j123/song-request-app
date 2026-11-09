@@ -81,9 +81,10 @@ export function NowPlayingScreen({ snap }: { snap: EventSnapshot }) {
 }
 
 /* ============================================================ REQUEST WALL */
-const COLS = 6;
+const COLS = 5;
 const ROWS = 4;
-const CELL_W = 1920 / COLS;
+const WALL_W = 1920 - 440; // right side reserved for the QR panel
+const CELL_W = WALL_W / COLS;
 const CELL_H = (1080 - 112 - 84) / ROWS;
 
 export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
@@ -92,7 +93,7 @@ export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
       queueOf(snap.requests)
         .concat(snap.requests.filter((r) => r.status === 'playing'))
         .sort((a, b) => b.voteCount - a.voteCount || b.requestedAt.localeCompare(a.requestedAt))
-        .slice(0, COLS * ROWS - 2),
+        .slice(0, COLS * ROWS),
     [snap.requests],
   );
   // cells ordered from centre outwards → most popular songs take centre stage
@@ -100,8 +101,7 @@ export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
     const all: Array<{ c: number; r: number; d: number }> = [];
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++) {
-        if (r >= 1 && r <= 2 && c >= 5) continue; // QR zone
-        all.push({ c, r, d: Math.hypot((c - 2.5) * 1, (r - 1.5) * 1.6) });
+        all.push({ c, r, d: Math.hypot(c - 2, (r - 1.5) * 1.4) });
       }
     return all.sort((a, b) => a.d - b.d);
   }, []);
@@ -111,16 +111,15 @@ export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
     <div className="relative flex h-full flex-col">
       <DisplayHeader snap={snap} compact />
       <div className="relative flex-1">
-        <div className="absolute left-16 top-2 z-10 font-display text-[22px] font-black tracking-[0.4em] text-white/50">THE REQUEST WALL</div>
         <LayoutGroup>
           <AnimatePresence>
             {items.map((r, i) => {
               const cell = cells[i];
               if (!cell) return null;
               const h = hashString(r.id);
-              const jx = ((h % 40) - 20) * 1.2;
-              const jy = (((h >> 4) % 30) - 15) * 1.2;
-              const scale = 0.78 + 0.5 * (r.voteCount / max);
+              const jx = ((h % 30) - 15) * 0.8;
+              const jy = (((h >> 4) % 30) - 15) * 1.0;
+              const scale = 0.85 + 0.22 * (r.voteCount / max);
               return (
                 <motion.div
                   key={r.id}
@@ -131,8 +130,8 @@ export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
                   transition={{ type: 'spring', stiffness: 60, damping: 14 }}
                   className="absolute"
                   style={{
-                    left: cell.c * CELL_W + CELL_W / 2 - 130 + jx,
-                    top: cell.r * CELL_H + CELL_H / 2 - 95 + jy,
+                    left: 20 + cell.c * CELL_W + CELL_W / 2 - 120 + jx,
+                    top: cell.r * CELL_H + CELL_H / 2 - 60 + jy,
                     zIndex: Math.round(scale * 100),
                   }}
                 >
@@ -144,7 +143,7 @@ export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
             })}
           </AnimatePresence>
         </LayoutGroup>
-        <div className="absolute right-12 top-[170px] z-[200]">
+        <div className="absolute right-12 top-1/2 z-[200] -translate-y-1/2">
           <div className="glass-strong rounded-[32px] p-6">
             <QRBlock snap={snap} size={150} vertical />
           </div>
@@ -162,14 +161,14 @@ function WallCard({ r, hot }: { r: SongRequest; hot: boolean }) {
   return (
     <div
       className={cn(
-        'glass-strong flex w-[260px] items-center gap-3 rounded-[24px] p-3 shadow-2xl',
+        'glass-strong flex w-[240px] items-center gap-3 rounded-[24px] p-3 shadow-2xl',
         hot && 'neon-border shadow-glow-lg',
         r.status === 'playing' && 'ring-2 ring-cyan/70',
       )}
     >
-      <Artwork url={r.artworkUrl} seed={r.songTitle} label={r.songTitle} className="h-[84px] w-[84px]" rounded="rounded-[16px]" />
+      <Artwork url={r.artworkUrl} seed={r.songTitle} label={r.songTitle} className="h-[76px] w-[76px]" rounded="rounded-[16px]" />
       <div className="min-w-0 flex-1">
-        <div className="line-clamp-2 text-[19px] font-bold leading-tight">{r.songTitle}</div>
+        <div className="line-clamp-2 text-[18px] font-bold leading-tight">{r.songTitle}</div>
         <div className="truncate text-[15px] text-white/55">{r.artist}</div>
         <div className="mt-1.5 flex items-center justify-between text-[14px]">
           <span className="truncate text-white/45">{r.guestName}</span>
