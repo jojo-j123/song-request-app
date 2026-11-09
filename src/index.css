@@ -215,6 +215,17 @@
   background: linear-gradient(135deg, rgba(28, 28, 50, 0.95), rgba(16, 16, 30, 0.92));
 }
 
+/* iPhone / iPad preview: keep the look, drop the large always-animating layers. */
+.stage[data-lite] .aurora,
+.stage[data-lite] .beam,
+.stage[data-lite] .grid-floor,
+.stage[data-lite] .grain::after {
+  animation: none;
+}
+.stage[data-lite] .beam {
+  display: none;
+}
+
 @property --angle {
   syntax: '<angle>';
   initial-value: 0deg;

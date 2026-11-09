@@ -26,9 +26,13 @@ function useCanvasLoop(
     const frameMs = 1000 / (opts.fps ?? 60);
     const resize = () => {
       const r = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, opts.dprCap ?? 1.5);
       w = r.width;
       h = r.height;
+      // Cap the backing bitmap: phones/tablets get a much smaller budget (memory-constrained).
+      const mobile = /iPad|iPhone|iPod|Android/.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
+      const maxPx = mobile ? 1100 : 3840;
+      let dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1 : opts.dprCap ?? 1.5);
+      if (w * dpr > maxPx) dpr = maxPx / Math.max(1, w);
       canvas.width = Math.max(1, Math.round(w * dpr));
       canvas.height = Math.max(1, Math.round(h * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

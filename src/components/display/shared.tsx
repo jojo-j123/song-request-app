@@ -8,9 +8,24 @@ import { guestUrl } from '@/lib/utils';
 export const STAGE_W = 1920;
 export const STAGE_H = 1080;
 
-/** Fixed 1920×1080 canvas scaled to any 16:9 screen (1080p, 4K, projectors) — pixel-identical layouts. */
+/** True on iPhone / iPad / iPod (incl. iPadOS that reports itself as Mac). */
+export const isAppleMobile = () =>
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+const supportsZoom = () => typeof CSS !== 'undefined' && CSS.supports?.('zoom', '0.5');
+
+/**
+ * Fixed 1920×1080 canvas fitted to any 16:9 screen (1080p, 4K, projectors) — pixel-identical layouts.
+ *
+ * Uses CSS `zoom` where supported instead of `transform: scale()`. With a transform, WebKit keeps
+ * every composited layer inside the stage at full 1920×1080 × device-pixel-ratio resolution, which
+ * exhausts iPhone memory ("A problem repeatedly occurred"). `zoom` sizes those layers to what is
+ * actually on screen.
+ */
 export function Stage({ children }: { children: ReactNode }) {
   const [scale, setScale] = useState(1);
+  const [useZoom] = useState(supportsZoom);
   useLayoutEffect(() => {
     const fit = () => setScale(Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H));
     fit();
@@ -18,15 +33,15 @@ export function Stage({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('resize', fit);
   }, []);
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+    <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-black">
       <div
-        className="stage absolute left-1/2 top-1/2 overflow-hidden bg-ink"
-        style={{
-          width: STAGE_W,
-          height: STAGE_H,
-          transform: `translate(-50%, -50%) scale(${scale})`,
-          transformOrigin: 'center',
-        }}
+        className="stage relative shrink-0 overflow-hidden bg-ink"
+        data-lite={isAppleMobile() ? '1' : undefined}
+        style={
+          useZoom
+            ? { width: STAGE_W, height: STAGE_H, zoom: scale }
+            : { width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, transformOrigin: 'center' }
+        }
       >
         {children}
       </div>
