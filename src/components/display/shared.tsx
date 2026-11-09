@@ -20,7 +20,7 @@ export function Stage({ children }: { children: ReactNode }) {
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
       <div
-        className="absolute left-1/2 top-1/2 overflow-hidden bg-ink"
+        className="stage absolute left-1/2 top-1/2 overflow-hidden bg-ink"
         style={{
           width: STAGE_W,
           height: STAGE_H,
@@ -119,12 +119,12 @@ export function FooterTicker() {
   return (
     <footer className="relative flex h-[84px] items-center justify-center overflow-hidden border-t border-white/[0.06]">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
           key={i}
-          initial={{ opacity: 0, y: 24, filter: 'blur(10px)', letterSpacing: '0.6em' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)', letterSpacing: '0.32em' }}
-          exit={{ opacity: 0, y: -24, filter: 'blur(10px)' }}
+          initial={{ opacity: 0, y: 24, letterSpacing: '0.6em' }}
+          animate={{ opacity: 1, y: 0, letterSpacing: '0.32em' }}
+          exit={{ opacity: 0, y: -24 }}
           transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
           className="font-display text-[28px] font-bold text-white/85"
         >

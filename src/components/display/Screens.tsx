@@ -15,19 +15,16 @@ export function NowPlayingScreen({ snap }: { snap: EventSnapshot }) {
   return (
     <div className="relative flex h-full flex-col">
       <DisplayHeader snap={snap} compact />
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {req ? (
           <motion.div
             key={req.id}
-            initial={{ opacity: 0, scale: 1.05, filter: 'blur(30px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(30px)' }}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 1.1 }}
             className="relative grid flex-1 grid-cols-[760px_1fr] items-center gap-20 px-24"
           >
-            <div className="absolute inset-0 -z-0 opacity-40">
-              <Artwork url={req.artworkUrl} seed={req.songTitle} className="h-full w-full scale-150 blur-[120px]" rounded="" />
-            </div>
             <div className="relative grid h-[760px] w-[760px] place-items-center">
               <div className="absolute inset-0">
                 <Visualizer variant="ring" bars={120} energy={1.15} />
@@ -126,7 +123,7 @@ export function RequestWallScreen({ snap }: { snap: EventSnapshot }) {
                   layout
                   initial={{ opacity: 0, scale: 0.2, x: 900 - cell.c * CELL_W, y: -400, rotate: -20 }}
                   animate={{ opacity: 1, scale, x: 0, y: 0, rotate: ((h >> 8) % 10) - 5 }}
-                  exit={{ opacity: 0, scale: 0.3, filter: 'blur(12px)' }}
+                  exit={{ opacity: 0, scale: 0.3 }}
                   transition={{ type: 'spring', stiffness: 60, damping: 14 }}
                   className="absolute"
                   style={{
@@ -256,7 +253,7 @@ function Highlight({ icon, label, value, sub }: { icon: React.ReactNode; label: 
       <div className="flex items-center gap-3 text-[15px] font-bold uppercase tracking-[0.3em] text-white/50">
         {icon} {label}
       </div>
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div key={value} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="mt-4 truncate font-display text-[36px] font-black">
           {value}
         </motion.div>

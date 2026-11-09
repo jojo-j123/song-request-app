@@ -4,7 +4,7 @@ import { Visualizer } from '@/components/fx';
 import { Artwork, CountUp, Equalizer } from '@/components/ui';
 import { leaderOf, nowPlayingOf, queueOf } from '@/lib/selectors';
 import type { EventSnapshot, SongRequest } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn, coverGradient } from '@/lib/utils';
 import { DisplayHeader, FooterTicker, QRBlock, useChanged } from './shared';
 
 const titleSize = (t: string, base: number) => (t.length > 34 ? base * 0.62 : t.length > 22 ? base * 0.78 : base);
@@ -26,7 +26,7 @@ export function MainScreen({ snap }: { snap: EventSnapshot }) {
         <div className="flex min-h-0 flex-col gap-8">
           <UpNext list={upNext} leaderId={leader?.id} showNames={showNames} />
           <div className="glass relative mt-auto overflow-hidden rounded-[36px] p-8">
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-magenta/25 blur-3xl" />
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[radial-gradient(closest-side,rgb(var(--c-magenta)/0.35),transparent)]" />
             <QRBlock snap={snap} size={200} />
           </div>
         </div>
@@ -39,20 +39,18 @@ export function MainScreen({ snap }: { snap: EventSnapshot }) {
 function NowPlayingCard({ req, showNames }: { req: SongRequest | null; showNames: boolean }) {
   return (
     <div className="glass neon-border relative h-[480px] overflow-hidden rounded-[40px]">
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {req ? (
           <motion.div
             key={req.id}
-            initial={{ opacity: 0, scale: 1.04, filter: 'blur(20px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 0.97, filter: 'blur(20px)' }}
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
             className="absolute inset-0"
           >
-            {/* blurred artwork wash */}
-            <div className="absolute inset-0 opacity-50">
-              <Artwork url={req.artworkUrl} seed={req.songTitle} className="h-full w-full scale-125 blur-[80px]" rounded="" />
-            </div>
+            {/* colour wash (gradient, not a blur filter: blur layers crash iOS Safari at this size) */}
+            <div className="absolute inset-0 opacity-40" style={{ background: coverGradient(req.songTitle) }} />
             <div className="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/60 to-ink/30" />
             <div className="relative flex h-full items-center gap-12 p-10 pb-[120px]">
               <motion.div
@@ -62,7 +60,7 @@ function NowPlayingCard({ req, showNames }: { req: SongRequest | null; showNames
                 className="relative"
                 style={{ perspective: 1000 }}
               >
-                <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-primary/60 to-magenta/60 opacity-60 blur-2xl" />
+                <div className="absolute -inset-6 rounded-[40px] bg-[radial-gradient(closest-side,rgb(var(--c-magenta)/0.45),rgb(var(--c-primary)/0.25)_60%,transparent)]" />
                 <Artwork url={req.artworkUrl} seed={req.songTitle} label={req.songTitle} className="relative h-[300px] w-[300px] shadow-2xl" rounded="rounded-[28px]" />
               </motion.div>
               <div className="min-w-0 flex-1">
@@ -133,7 +131,7 @@ function LeaderCard({ req, votingEnabled, round }: { req: SongRequest | null; vo
         )}
       </AnimatePresence>
       <div className="relative flex h-full items-center gap-10 px-10">
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence>
           {req ? (
             <motion.div
               key={req.id}
@@ -195,8 +193,8 @@ function UpNext({ list, leaderId, showNames }: { list: SongRequest[]; leaderId?:
               <motion.div
                 layout
                 key={r.id}
-                initial={{ opacity: 0, x: 80, scale: 0.9, filter: 'blur(8px)' }}
-                animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
+                initial={{ opacity: 0, x: 80, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -60, scale: 0.9 }}
                 transition={{ type: 'spring', stiffness: 160, damping: 22 }}
                 className={cn(

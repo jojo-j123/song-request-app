@@ -24,7 +24,7 @@ function Backdrop({ children, tone = 'dark' }: { children: React.ReactNode; tone
       className="absolute inset-0 z-50 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: 'blur(20px)' }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
     >
       <div className="absolute inset-0 bg-ink" />
@@ -64,7 +64,7 @@ export function CountdownReveal({ cmd, req, showNames }: { cmd: DisplayCommand; 
 
   return (
     <Backdrop>
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {phase === 'intro' && (
           <motion.div key="intro" className="grid h-full place-items-center" exit={{ opacity: 0 }}>
             <motion.div
@@ -81,9 +81,9 @@ export function CountdownReveal({ cmd, req, showNames }: { cmd: DisplayCommand; 
           <motion.div
             key={`n${n}`}
             className="grid h-full place-items-center"
-            initial={{ scale: 2.4, opacity: 0, filter: 'blur(30px)' }}
-            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-            exit={{ scale: 0.4, opacity: 0, filter: 'blur(20px)' }}
+            initial={{ scale: 2.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.4, opacity: 0 }}
             transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <div className="relative">
@@ -111,7 +111,7 @@ export function CountdownReveal({ cmd, req, showNames }: { cmd: DisplayCommand; 
               <div className="absolute -inset-16">
                 <Visualizer variant="ring" bars={110} energy={1.3} />
               </div>
-              <div className="absolute -inset-8 rounded-[60px] bg-gradient-to-br from-primary via-magenta to-cyan opacity-60 blur-3xl" />
+              <div className="absolute -inset-8 rounded-[60px] bg-[radial-gradient(closest-side,rgb(var(--c-magenta)/0.45),rgb(var(--c-primary)/0.25)_60%,transparent)]" />
               <Artwork url={req.artworkUrl} seed={req.songTitle} label={req.songTitle} className="relative h-[560px] w-[560px]" rounded="rounded-[48px]" />
             </motion.div>
             <div className="min-w-0">
@@ -119,8 +119,8 @@ export function CountdownReveal({ cmd, req, showNames }: { cmd: DisplayCommand; 
                 UP NEXT
               </motion.div>
               <motion.div
-                initial={{ opacity: 0, y: 40, filter: 'blur(14px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
                 className="mt-6 line-clamp-3 font-display font-black leading-[0.98] tracking-tight glow-text"
                 style={{ fontSize: req.songTitle.length > 24 ? 86 : 118 }}
@@ -212,8 +212,8 @@ export function HypeMoment({ cmd }: { cmd: DisplayCommand }) {
           {words.map((w, i) => (
             <motion.span
               key={i}
-              initial={{ scale: 3, opacity: 0, rotate: i % 2 ? 8 : -8, filter: 'blur(20px)' }}
-              animate={{ scale: [3, 0.9, 1.05, 1], opacity: 1, rotate: 0, filter: 'blur(0px)' }}
+              initial={{ scale: 3, opacity: 0, rotate: i % 2 ? 8 : -8 }}
+              animate={{ scale: [3, 0.9, 1.05, 1], opacity: 1, rotate: 0 }}
               transition={{ delay: 0.2 + i * 0.18, duration: 0.7 }}
               className={cn('font-display text-[170px] font-black leading-[1]', i === words.length - 1 ? 'text-gradient-anim glow-text' : 'text-white')}
             >
@@ -334,9 +334,9 @@ export function SurpriseMoment({ cmd }: { cmd: DisplayCommand }) {
     <Backdrop>
       {revealed && <Confetti burstKey={cmd.id} count={240} />}
       <div className="flex h-full flex-col items-center justify-center text-center">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {!revealed ? (
-            <motion.div key="box" exit={{ scale: 3, opacity: 0, filter: 'blur(30px)' }} transition={{ duration: 0.5 }} className="flex flex-col items-center">
+            <motion.div key="box" exit={{ scale: 3, opacity: 0 }} transition={{ duration: 0.5 }} className="flex flex-col items-center">
               <motion.div animate={{ rotate: [0, -8, 8, -12, 12, -6, 6, 0], scale: [1, 1.05, 1, 1.1, 1, 1.15, 1.2] }} transition={{ duration: 3, ease: 'easeIn' }}>
                 <Gift className="h-56 w-56 text-magenta drop-shadow-[0_0_60px_rgb(var(--c-magenta))]" />
               </motion.div>
@@ -384,7 +384,7 @@ export function CrowdVoteOverlay({ battle, snap }: { battle: Battle; snap: Event
           <div className="flex items-center gap-5 font-display text-[44px] font-black tracking-[0.25em]">
             <Swords className="h-12 w-12 text-cyan" /> CROWD VOTE
           </div>
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {ended ? (
               <motion.div key="end" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="font-display text-[40px] font-black tracking-[0.2em] text-amber-300">
                 THE CROWD HAS SPOKEN

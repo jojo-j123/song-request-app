@@ -83,13 +83,13 @@ export default function Display({ forcedMode }: { forcedMode?: DisplayMode }) {
           density={snap.settings.animationIntensity === 'low' ? 0.5 : snap.settings.animationIntensity === 'high' ? 1.6 : 1}
           energy={snap.settings.animationIntensity === 'high' ? 1.3 : 1}
         />
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div
             key={mode}
             className="absolute inset-0"
-            initial={{ opacity: 0, scale: 0.96, filter: 'blur(24px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.04, filter: 'blur(24px)' }}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.04 }}
             transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
           >
             {mode === 'main' && <MainScreen snap={snap} />}
@@ -197,12 +197,12 @@ function ApprovedBursts({ snap }: { snap: EventSnapshot }) {
             key={r.id}
             initial={{ opacity: 0, y: -30, scale: 0.6 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.3, filter: 'blur(16px)' }}
+            exit={{ opacity: 0, scale: 1.3 }}
             transition={{ type: 'spring', stiffness: 220, damping: 18 }}
             className="relative"
           >
             <motion.div
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-primary via-magenta to-cyan blur-2xl"
+              className="absolute inset-0 rounded-full bg-[radial-gradient(closest-side,rgb(var(--c-magenta)/0.45),rgb(var(--c-primary)/0.25)_60%,transparent)]"
               initial={{ scale: 0.5, opacity: 1 }}
               animate={{ scale: 1.8, opacity: 0 }}
               transition={{ duration: 1.1 }}
