@@ -145,6 +145,7 @@ await wait(10000);
 await d.getByText('THE CROWD HAS SPOKEN').waitFor({ timeout: 8000 });
 await d.screenshot({ path: `${OUT}/display-battle-winner.png` });
 ok(true, 'battle ended with winner');
+await admin.getByText('Hide last battle result').click();
 
 console.log('12. 4K + DJ mode + standalone routes');
 const k = track(await ctx.newPage());

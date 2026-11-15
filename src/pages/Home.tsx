@@ -56,7 +56,7 @@ export default function Home() {
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-ink">
       <div className="fixed inset-0">
-        <Atmosphere density={0.8} />
+        <Atmosphere density={0.8} calm />
       </div>
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-8 lg:py-14">
         <header className="flex items-center justify-between">

@@ -80,23 +80,32 @@ export function applyTheme(theme: ThemeConfig, el: HTMLElement = document.docume
   el.style.setProperty('--c-cyan', hexToRgbTriplet(theme.cyan));
 }
 
+const COVER_PALETTES: Array<[string, string]> = [
+  ['#8B5CF6', '#EC4899'],
+  ['#3B82F6', '#22D3EE'],
+  ['#EC4899', '#F59E0B'],
+  ['#22D3EE', '#8B5CF6'],
+  ['#6366F1', '#EC4899'],
+  ['#14B8A6', '#3B82F6'],
+  ['#F43F5E', '#8B5CF6'],
+  ['#A855F7', '#22D3EE'],
+];
+
+/** The two colours of a song's generated cover (also used to tint the room when it plays). */
+export function coverColors(seed: string): [string, string] {
+  return COVER_PALETTES[hashString(seed) % COVER_PALETTES.length];
+}
+
 /** Deterministic gradient "cover art" for songs without artwork. */
 export function coverGradient(seed: string) {
   const h = hashString(seed);
-  const palettes = [
-    ['#8B5CF6', '#EC4899'],
-    ['#3B82F6', '#22D3EE'],
-    ['#EC4899', '#F59E0B'],
-    ['#22D3EE', '#8B5CF6'],
-    ['#6366F1', '#EC4899'],
-    ['#14B8A6', '#3B82F6'],
-    ['#F43F5E', '#8B5CF6'],
-    ['#A855F7', '#22D3EE'],
-  ];
-  const [a, b] = palettes[h % palettes.length];
+  const [a, b] = coverColors(seed);
   const angle = h % 360;
   return `radial-gradient(circle at ${20 + (h % 60)}% ${20 + ((h >> 3) % 60)}%, ${b}cc, transparent 60%), linear-gradient(${angle}deg, ${a}, #0b0b18 85%)`;
 }
+
+/** Design pixels → rem. The LED stage scales by changing the root font size, so display sizes are rem. */
+export const rem = (px: number) => `${px / 16}rem`;
 
 export function initials(name: string) {
   return name

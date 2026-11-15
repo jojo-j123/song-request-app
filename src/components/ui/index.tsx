@@ -1,13 +1,13 @@
 import { AnimatePresence, motion, animate, useMotionValue, useTransform } from 'framer-motion';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, Loader2, Wifi, WifiOff, X } from 'lucide-react';
-import { cn, coverGradient, initials } from '@/lib/utils';
+import { cn, coverGradient, initials, rem } from '@/lib/utils';
 import type { ConnectionStatus } from '@/lib/types';
 
 /* ------------------------------------------------------------------ Brand */
 export function BrandMark({ size = 28, className }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden>
+    <svg viewBox="0 0 64 64" className={className} style={{ width: rem(size), height: rem(size) }} aria-hidden>
       <defs>
         <linearGradient id="bm" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="rgb(var(--c-primary))" />
@@ -28,13 +28,13 @@ export function BrandMark({ size = 28, className }: { size?: number; className?:
 
 export function EventLogo({ name, logoUrl, size = 48 }: { name: string; logoUrl: string | null; size?: number }) {
   if (logoUrl)
-    return <img src={logoUrl} alt={name} style={{ width: size, height: size }} className="rounded-2xl object-cover" />;
+    return <img src={logoUrl} alt={name} style={{ width: rem(size), height: rem(size), borderRadius: rem(size * 0.3) }} className="shrink-0 object-cover" />;
   return (
     <div
-      style={{ width: size, height: size }}
-      className="grid place-items-center rounded-2xl bg-gradient-to-br from-primary via-magenta to-cyan p-[2px] shadow-glow"
+      style={{ width: rem(size), height: rem(size), borderRadius: rem(size * 0.3), padding: rem(Math.max(2, size * 0.04)) }}
+      className="grid shrink-0 place-items-center bg-gradient-to-br from-primary via-magenta to-cyan shadow-glow"
     >
-      <div className="grid h-full w-full place-items-center rounded-[14px] bg-ink">
+      <div className="grid h-full w-full place-items-center bg-ink" style={{ borderRadius: rem(size * 0.26) }}>
         <BrandMark size={size * 0.6} />
       </div>
     </div>

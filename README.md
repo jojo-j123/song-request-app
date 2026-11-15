@@ -7,7 +7,7 @@ Guests scan a QR code, request songs and vote from their phones. The DJ runs eve
 | Route | What it is | Built for |
 |---|---|---|
 | `/guest/:eventId` | Request + vote (mobile) | iOS / Android browsers |
-| `/display/:eventId` | Main LED screen (follows the DJ's chosen mode) | 1920×1080, 4K, projectors |
+| `/display/:eventId` | Main LED screen (follows the DJ's chosen mode) | 1080p, 4K, ultra-wide walls, vertical totems, projectors |
 | `/request-wall/:eventId` | Floating request wall (always) | Second screen |
 | `/leaderboard/:eventId` | Rankings + Wall of Fame (always) | Second screen |
 | `/admin/:eventId` | Full DJ Control Center | Laptop / tablet |
@@ -72,10 +72,16 @@ You can run multiple events side by side. Each has its own queue, votes, setting
 ## 5. Put it on the LED screen
 
 1. On the machine connected to the screen, open `/display/<event-id>` in Chrome or Edge.
-2. Press **F** (or move the mouse and click ⤢) for fullscreen. The cursor hides itself, and the page requests a screen wake-lock.
-3. The layout is a fixed 1920×1080 stage scaled to fit, so it's pixel-identical on 1080p, 4K and projectors.
-4. If you turned on sound effects, click **Enable sound** once on the display. Browsers block audio until a click.
-5. Optional second screens: `/request-wall/<id>` and `/leaderboard/<id>`.
+2. Press **F** (or move the mouse and click ⤢) for fullscreen. The cursor and controls hide themselves, and the page requests a screen wake-lock.
+3. The layout fits the screen it is given:
+   - **Landscape:** designed at 1920×1080; stretches to fill ultra-wide walls (up to 21:9) and 16:10 laptops. 4K is the same layout, sharper.
+   - **Portrait:** a dedicated vertical layout for LED totems and phones (1080×1920, stretching for taller screens).
+   - Anything outside those ranges is centred, with the animated background filling the bars.
+4. **Make it react to the music (optional):** move the mouse and click **React to music**, then allow the microphone. The spectrum, light rays, covers and background now pulse with what is actually playing in the room. The audio is analysed on that computer only: nothing is recorded, stored or sent, and it is never played back. The choice is remembered on that device. Without it, the visuals run on a built-in 124 BPM animation.
+5. If you turned on sound effects, click **Enable sound** once on the display. Browsers block audio until a click.
+6. Optional second screens: `/request-wall/<id>` and `/leaderboard/<id>`.
+
+The room takes the colour of the song: when a request is marked as playing, the lighting, record label and spectrum shift to that song's album-art colours (or its generated cover's colours when there is no artwork).
 
 ## 6. How guests get in
 
@@ -123,8 +129,10 @@ src/
   lib/backend/           Backend interface + local (localStorage/BroadcastChannel) and Supabase adapters
   lib/demo/              100-guest simulator with leader election (one tab drives it)
   lib/sound.ts           WebAudio-synthesised SFX (no audio files, nothing copyrighted)
-  components/fx/         canvas particles, visualizers, confetti, atmosphere (DPR-capped for 4K)
-  components/display/    LED screens + cinematic overlays
+  lib/audio.ts           audio-reactive engine: mic analyser (opt-in) or synth, shared by every visual
+  lib/palette.ts         album-art colour extraction (with a generated-cover fallback)
+  components/fx/         canvas aurora/light rays, particles, spectrum visualizers, confetti
+  components/display/    LED screens + cinematic overlays (landscape + portrait)
   components/admin/      DJ control panels
   pages/                 route entry points (lazy-loaded)
 supabase/migrations/     schema, RLS, RPCs, realtime
@@ -132,5 +140,6 @@ supabase/migrations/     schema, RLS, RPCs, realtime
 
 **Known limits, stated plainly:**
 - Duplicate-vote protection uses an anonymous device ID stored in the browser, plus server-side unique constraints. A guest who clears their browser data or switches browsers can vote again. Locking it down further means requiring sign-in (e.g. SMS), which adds friction and costs submissions. Not worth it for most events.
-- The visualizers are synthesized, not driven by live audio. The app never touches the DJ's audio chain, by design. It manages requests and metadata only; music playback stays with the DJ.
+- The app never plays or streams music and never touches the DJ's audio chain. Music-reactive visuals listen through the display computer's microphone (opt-in), so they follow the room, not a direct feed: fine for a venue PA, less precise next to a noisy crowd with quiet music.
+- Display performance rules live at the top of `components/fx/index.tsx`: no CSS blur filters on large layers, and the stage scales by root font size (sizes in `components/display` are rem, 1rem = 16 design px). Breaking either brings back the iOS Safari memory crash.
 - Battle auto-finish and the demo simulator run in an open admin/DJ tab. If none is open, the display still shows the result when the timer ends, and the DB record is finalised the next time an admin tab is open.

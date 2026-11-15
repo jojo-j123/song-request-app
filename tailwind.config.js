@@ -16,8 +16,8 @@ export default {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
-        glow: '0 0 40px -6px rgb(var(--c-primary) / 0.6)',
-        'glow-lg': '0 0 80px -10px rgb(var(--c-primary) / 0.75), 0 0 30px -10px rgb(var(--c-magenta) / 0.6)',
+        glow: '0 0 2.5rem -0.375rem rgb(var(--c-primary) / 0.6)',
+        'glow-lg': '0 0 5rem -0.625rem rgb(var(--c-primary) / 0.75), 0 0 1.875rem -0.625rem rgb(var(--c-magenta) / 0.6)',
       },
     },
   },

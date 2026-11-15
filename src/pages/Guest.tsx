@@ -58,7 +58,7 @@ export default function Guest() {
   return (
     <div className="relative min-h-[100dvh] overflow-x-hidden bg-ink" data-intensity={snap.settings.animationIntensity}>
       <div className="fixed inset-0">
-        <Atmosphere theme={snap.event.theme.background} density={0.6} waves={false} grain={false} />
+        <Atmosphere theme={snap.event.theme.background} density={0.6} waves={false} grain={false} calm />
       </div>
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-10 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="flex items-center justify-between py-3">
