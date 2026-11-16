@@ -189,7 +189,7 @@ function OverlayLayer({ snap }: { snap: EventSnapshot }) {
     <AnimatePresence>
       {active ? (
         <motion.div key={active.id} className="absolute inset-0 z-50" exit={{ opacity: 0 }}>
-          {active.type === 'countdown' && <CountdownReveal cmd={active} req={find(active.payload.requestId)} showNames={showNames} names={names} />}
+          {active.type === 'countdown' && <CountdownReveal cmd={active} req={find(active.payload.requestId)} showNames={showNames} names={names} logoUrl={snap.event.logoUrl} />}
           {active.type === 'fame' && <WallOfFameMoment cmd={active} req={find(active.payload.requestId)} />}
           {active.type === 'hype' && <HypeMoment cmd={active} />}
           {active.type === 'dedication' && <DedicationMoment cmd={active} req={find(active.payload.requestId)} />}

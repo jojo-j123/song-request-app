@@ -7,7 +7,7 @@ import { Panel, useAdminActions } from './common';
 
 type Run = ReturnType<typeof useAdminActions>['run'];
 
-async function fileToDataUrl(file: File, max = 256): Promise<string> {
+async function fileToDataUrl(file: File, max = 512): Promise<string> {
   const img = await createImageBitmap(file);
   const scale = Math.min(1, max / Math.max(img.width, img.height));
   const c = document.createElement('canvas');

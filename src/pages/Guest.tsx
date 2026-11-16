@@ -63,7 +63,7 @@ export default function Guest() {
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-10 pt-[max(1rem,env(safe-area-inset-top))]">
         <header className="flex items-center justify-between py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <EventLogo name={snap.event.name} logoUrl={snap.event.logoUrl} size={36} />
+            <EventLogo name={snap.event.name} logoUrl={snap.event.logoUrl} size={snap.event.logoUrl ? 56 : 36} />
             <div className="min-w-0">
               <div className="truncate font-display text-sm font-bold">{snap.event.name}</div>
               <div className="text-[11px] uppercase tracking-[0.2em] text-white/45">Live requests</div>

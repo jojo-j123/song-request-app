@@ -286,15 +286,17 @@ export function DisplayHeader({ snap }: { snap: EventSnapshot }) {
     snap.event.date &&
     new Date(snap.event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
   const demo = snap.settings.demo.enabled;
+  // with an uploaded logo, the logo leads and the event name steps back
+  const branded = !!snap.event.logoUrl;
 
   if (portrait)
     return (
       <header className="relative z-10 flex shrink-0 flex-col justify-between px-10 pb-1 pt-8" style={{ height: rem(HEADER_P) }}>
         <div className="flex items-center justify-between gap-6">
           <div className="flex min-w-0 items-center gap-5">
-            <EventLogo name={snap.event.name} logoUrl={snap.event.logoUrl} size={76} />
+            <EventLogo name={snap.event.name} logoUrl={snap.event.logoUrl} size={branded ? 104 : 76} />
             <div className="min-w-0">
-              <div className="truncate font-display text-[2.5rem] font-black leading-[1.15] tracking-tight" dir="auto">
+              <div className={cn('truncate font-display font-black leading-[1.15] tracking-tight', branded ? 'text-[1.75rem] text-white/85' : 'text-[2.5rem]')} dir="auto">
                 {snap.event.name}
               </div>
               {date && <div className="text-[1.125rem] font-semibold uppercase tracking-[0.28em] text-white/45">{date}</div>}
@@ -324,9 +326,9 @@ export function DisplayHeader({ snap }: { snap: EventSnapshot }) {
   return (
     <header className="relative z-10 flex shrink-0 items-center justify-between gap-8 px-16" style={{ height: rem(HEADER_L) }}>
       <div className="flex min-w-0 max-w-[36%] items-center gap-5">
-        <EventLogo name={snap.event.name} logoUrl={snap.event.logoUrl} size={62} />
+        <EventLogo name={snap.event.name} logoUrl={snap.event.logoUrl} size={branded ? 88 : 62} />
         <div className="min-w-0">
-          <div className="truncate font-display text-[2.125rem] font-black leading-[1.15] tracking-tight" dir="auto">
+          <div className={cn('truncate font-display font-black leading-[1.15] tracking-tight', branded ? 'text-[1.5rem] text-white/85' : 'text-[2.125rem]')} dir="auto">
             {snap.event.name}
           </div>
           {date && <div className="text-[0.9375rem] font-semibold uppercase tracking-[0.3em] text-white/45">{date}</div>}

@@ -27,8 +27,16 @@ export function BrandMark({ size = 28, className }: { size?: number; className?:
 }
 
 export function EventLogo({ name, logoUrl, size = 48 }: { name: string; logoUrl: string | null; size?: number }) {
+  // An uploaded logo is shown whole, at its own proportions (wordmarks stay wide, never cropped).
   if (logoUrl)
-    return <img src={logoUrl} alt={name} style={{ width: rem(size), height: rem(size), borderRadius: rem(size * 0.3) }} className="shrink-0 object-cover" />;
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        style={{ height: rem(size), maxWidth: rem(size * 4.5), borderRadius: rem(size * 0.12) }}
+        className="w-auto shrink-0 object-contain"
+      />
+    );
   return (
     <div
       style={{ width: rem(size), height: rem(size), borderRadius: rem(size * 0.3), padding: rem(Math.max(2, size * 0.04)) }}

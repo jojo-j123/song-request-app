@@ -71,7 +71,10 @@ export function CountdownReveal({
   req,
   showNames,
   names,
+  logoUrl,
 }: {
+  /** Event logo, shown as the opening card of the countdown. */
+  logoUrl?: string | null;
   cmd: DisplayCommand;
   req: SongRequest | undefined;
   showNames: boolean;
@@ -102,7 +105,17 @@ export function CountdownReveal({
     <Backdrop palette={phase === 'reveal' ? palette : null}>
       <AnimatePresence>
         {phase === 'intro' && (
-          <motion.div key="intro" className="absolute inset-0 grid place-items-center" exit={{ opacity: 0, scale: 1.25 }} transition={{ duration: 0.4 }}>
+          <motion.div key="intro" className="absolute inset-0 flex flex-col items-center justify-center gap-10" exit={{ opacity: 0, scale: 1.25 }} transition={{ duration: 0.4 }}>
+            {logoUrl && (
+              <motion.img
+                src={logoUrl}
+                alt=""
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6 }}
+                className="h-[13rem] w-auto max-w-[70%] object-contain"
+              />
+            )}
             <motion.div
               initial={{ letterSpacing: '1.2em', opacity: 0 }}
               animate={{ letterSpacing: '0.4em', opacity: 1 }}

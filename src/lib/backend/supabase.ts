@@ -255,6 +255,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
     subscribe(eventId, onSnapshot, onStatus) {
       let closed = false;
       let channel: RealtimeChannel | null = null;
+      let libChannel: RealtimeChannel | null = null;
       let everConnected = false;
       const emit = () => {
         const c = caches.get(eventId);
@@ -298,7 +299,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
       const connect = () => {
         onStatus?.(everConnected ? 'reconnecting' : 'connecting');
         channel = sb.channel(`event:${eventId}:${uid().slice(0, 6)}`);
-        for (const table of ['song_requests', 'event_settings', 'event_moments', 'library_tracks']) {
+        for (const table of ['song_requests', 'event_settings', 'event_moments']) {
           channel.on('postgres_changes', { event: '*', schema: 'public', table, filter: `event_id=eq.${eventId}` }, (p) =>
             apply(table, p),
           );
@@ -306,6 +307,12 @@ export function createSupabaseBackend(url: string, key: string): Backend {
         channel.on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: `id=eq.${eventId}` }, (p) =>
           apply('events', p),
         );
+        // The jukebox library has its own channel: on a database without migration 0002 it simply
+        // fails to subscribe, and the rest of the event keeps syncing.
+        libChannel = sb
+          .channel(`library:${eventId}:${uid().slice(0, 6)}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'library_tracks', filter: `event_id=eq.${eventId}` }, (p) => apply('library_tracks', p))
+          .subscribe();
         channel.subscribe(async (status) => {
           if (closed) return;
           if (status === 'SUBSCRIBED') {
@@ -333,6 +340,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
         window.removeEventListener('offline', onOffline);
         document.removeEventListener('visibilitychange', onVisible);
         if (channel) sb.removeChannel(channel);
+        if (libChannel) sb.removeChannel(libChannel);
       };
     },
 
@@ -340,7 +348,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
       await sb.rpc('register_guest', { p_event_id: eventId, p_guest_id: guestId });
     },
     async submitRequest(eventId, i) {
-      const { data, error } = await sb.rpc('submit_request', {
+      const args: Record<string, unknown> = {
         p_event_id: eventId,
         p_guest_id: i.guestId,
         p_guest_name: i.guestName,
@@ -348,10 +356,12 @@ export function createSupabaseBackend(url: string, key: string): Backend {
         p_artist: i.artist,
         p_artwork_url: i.artworkUrl ?? null,
         p_client_id: i.clientId,
-        p_track_id: i.trackId ?? null,
         p_dedicated_to: i.dedicatedTo ?? null,
         p_message: i.message ?? null,
-      });
+      };
+      // only sent for library picks, so plain requests also work before migration 0002 is applied
+      if (i.trackId) args.p_track_id = i.trackId;
+      const { data, error } = await sb.rpc('submit_request', args);
       if (error) return err(error);
       return { ...data, data: data.data ? mapRequest(data.data) : undefined };
     },
