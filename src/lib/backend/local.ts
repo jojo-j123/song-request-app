@@ -17,7 +17,7 @@ import {
   toSnapshot,
   type LocalEventState,
 } from '../engine';
-import { DEFAULT_THEME, nowIso, slugify, uid } from '../utils';
+import { DEFAULT_SETTINGS, DEFAULT_THEME, nowIso, slugify, uid } from '../utils';
 
 const K = {
   index: 'encore:events',
@@ -42,7 +42,12 @@ if (typeof window !== 'undefined') {
 function read(id: string): LocalEventState | null {
   try {
     const raw = localStorage.getItem(K.event(id));
-    return raw ? (JSON.parse(raw) as LocalEventState) : null;
+    if (!raw) return null;
+    const s = JSON.parse(raw) as LocalEventState;
+    // events saved by older versions
+    s.library ??= [];
+    s.settings.jukebox ??= { ...DEFAULT_SETTINGS.jukebox };
+    return s;
   } catch {
     return null;
   }

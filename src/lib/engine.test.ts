@@ -125,3 +125,37 @@ describe('queue management', () => {
     expect(s.requests).toHaveLength(0);
   });
 });
+
+describe('jukebox', () => {
+  const tracks = [
+    { title: 'One More Time', artist: 'Daft Punk', durationSec: 320, artworkUrl: null, fileKey: 'a.mp3|1' },
+    { title: 'Halo', artist: 'Beyoncé', durationSec: 261, artworkUrl: null, fileKey: 'b.mp3|2' },
+  ];
+  it('imports tracks once and only accepts library songs in jukebox mode', () => {
+    const s = mk();
+    applyAdmin(s, { type: 'importTracks', tracks });
+    applyAdmin(s, { type: 'importTracks', tracks }); // re-import of the same files
+    expect(s.library).toHaveLength(2);
+    applyAdmin(s, { type: 'updateSettings', patch: { jukebox: { ...s.settings.jukebox, enabled: true }, autoApprove: true } });
+    expect(sub(s, 'g1', 'Some Song Not In Library').code).toBe('invalid');
+    const r = submitRequest(s, { guestId: 'g1', guestName: 'A', songTitle: 'whatever', artist: 'x', clientId: 'jb1', trackId: s.library[0].id });
+    expect(r.ok).toBe(true);
+    expect(r.data!.songTitle).toBe('One More Time'); // details come from the library, not the guest
+    expect(r.data!.trackId).toBe(s.library[0].id);
+    expect(r.data!.status).toBe('approved');
+    const dup = submitRequest(s, { guestId: 'g2', guestName: 'B', songTitle: '', artist: '', clientId: 'jb2', trackId: s.library[0].id });
+    expect(dup.code).toBe('duplicate_song');
+  });
+  it('plays a house track and unlinks requests when a track is removed', () => {
+    const s = mk();
+    applyAdmin(s, { type: 'importTracks', tracks });
+    applyAdmin(s, { type: 'playTrack', trackId: s.library[1].id });
+    const playing = s.requests.find((r) => r.status === 'playing')!;
+    expect(playing.songTitle).toBe('Halo');
+    applyAdmin(s, { type: 'playTrack', trackId: s.library[0].id });
+    expect(s.requests.filter((r) => r.status === 'playing')).toHaveLength(1);
+    applyAdmin(s, { type: 'removeTrack', id: s.library[0].id });
+    expect(s.library).toHaveLength(1);
+    expect(s.requests.every((r) => r.trackId !== 'gone' && (r.trackId === null || s.library.some((t) => t.id === r.trackId)))).toBe(true);
+  });
+});

@@ -71,6 +71,7 @@ export const DEFAULT_SETTINGS: EventSettings = {
   totalVotes: 0,
   guestCount: 0,
   demo: { enabled: false, running: false, speed: 1, autoDj: true },
+  jukebox: { enabled: false, order: 'votes', reveal: true, fill: true },
 };
 
 export function applyTheme(theme: ThemeConfig, el: HTMLElement = document.documentElement) {

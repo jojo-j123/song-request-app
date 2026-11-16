@@ -12,6 +12,7 @@ Guests scan a QR code, request songs and vote from their phones. The DJ runs eve
 | `/leaderboard/:eventId` | Rankings + Wall of Fame (always) | Second screen |
 | `/admin/:eventId` | Full DJ Control Center | Laptop / tablet |
 | `/dj/:eventId` | Simplified booth view | Tablet, big touch targets |
+| `/player/:eventId` | Jukebox: import MP3s, laptop plays requests | The laptop wired to the speakers |
 | `/` and `/login` | Event setup + organizer sign-in | — |
 
 Stack: React 18 + TypeScript + Vite, Tailwind, Framer Motion, Lucide, Canvas 2D effects, Supabase (Postgres + Auth + Realtime + RLS).
@@ -102,6 +103,18 @@ The display shows a large QR code ("GOT A SONG IN MIND? SCAN. REQUEST. VIBE."). 
 - **Screen & Moments:** Main / Now Playing / Request Wall / Leaderboard. Moments: Hype, Dedication, Birthday, Surprise.
 - **Voting:** open or close voting, start a new round, reset rounds. **Crowd Vote battle:** pick two songs and a timer. The screen shows a live head-to-head and reveals the winner automatically.
 - **Settings:** branding, limits, auto-approve, sound + volume, animation intensity, pause/resume requests, clear queue, reset event. Destructive actions ask for confirmation.
+
+## Jukebox mode (play your own MP3s)
+
+Use this when there is no DJ: the laptop plugged into the speakers plays your own files, and the crowd picks what comes next.
+
+1. Run [`supabase/migrations/0002_jukebox.sql`](supabase/migrations/0002_jukebox.sql) once (Supabase mode).
+2. On the laptop connected to the speakers (AUX / headphone out), open `/player/<event-id>` (or **Jukebox** in the dashboard header).
+3. **Add songs** or **Add folder**. Title and artist come from each file's tags, or from names like `Artist - Title.mp3`. The files stay on that laptop (in the browser's storage); only the song list is shared.
+4. Turn on **Jukebox mode**: guests can only request songs from your library, and requests are auto-approved.
+5. Click **START JUKEBOX** and keep the tab open: it is the music player. The top-voted request plays next, the big screen runs the countdown and the music starts on zero. With **Never go silent** on, a random library song plays when nobody has asked for anything.
+
+Good to know: import on the same laptop and browser you will play from (songs imported elsewhere show as "missing" until you add the same files there); run the player in one tab only; set the laptop to never sleep. You are responsible for having the right to play the music at your event.
 
 ## 8. Demo mode
 

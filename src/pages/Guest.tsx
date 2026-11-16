@@ -142,9 +142,29 @@ function RequestFlow({
   const [dupe, setDupe] = useState<SongRequest | null>(null);
   const clientId = useRef(uid());
 
+  // jukebox mode: guests choose from the organizer's own library instead of searching every song
+  const jukebox = snap.settings.jukebox.enabled;
+  const library = snap.library;
+  useEffect(() => {
+    if (jukebox && manual) setManual(false);
+    if (jukebox && selected && !library.some((t) => t.id === selected.id)) setSelected(null);
+  }, [jukebox, manual, selected, library]);
+
   useEffect(() => {
     if (manual || selected) return;
     const q = query.trim();
+    if (jukebox) {
+      const s = q.toLowerCase();
+      setSearching(false);
+      setResults(
+        library
+          .filter((t) => !s || `${t.title} ${t.artist}`.toLowerCase().includes(s))
+          .sort((a, b) => a.title.localeCompare(b.title))
+          .slice(0, 60)
+          .map((t) => ({ id: t.id, title: t.title, artist: t.artist, album: '', artworkUrl: t.artworkUrl })),
+      );
+      return;
+    }
     if (q.length < 2) {
       setResults([]);
       return;
@@ -166,7 +186,7 @@ function RequestFlow({
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [query, manual, selected]);
+  }, [query, manual, selected, jukebox, library]);
 
   const songTitle = selected?.title ?? title;
   const songArtist = selected?.artist ?? artist;
@@ -191,6 +211,7 @@ function RequestFlow({
           artist: songArtist,
           artworkUrl: selected?.artworkUrl ?? null,
           clientId: clientId.current,
+          trackId: jukebox ? selected?.id ?? null : null,
           dedicatedTo: dedicate ? dedicatedTo : null,
           message: dedicate ? message : null,
         })
@@ -309,7 +330,7 @@ function RequestFlow({
                 <X className="h-5 w-5" />
               </button>
             </motion.div>
-          ) : manual ? (
+          ) : manual && !jukebox ? (
             <div className="space-y-3">
               <div>
                 <label className="label" htmlFor="title">Song title</label>
@@ -325,13 +346,13 @@ function RequestFlow({
             </div>
           ) : (
             <div>
-              <label className="label" htmlFor="search">Find your song</label>
+              <label className="label" htmlFor="search">{jukebox ? "Pick from tonight's songs" : 'Find your song'}</label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/40" />
                 <input
                   id="search"
                   className="field pl-12"
-                  placeholder="Song or artist"
+                  placeholder={jukebox ? `Search ${library.length} songs` : 'Song or artist'}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   autoComplete="off"
@@ -367,7 +388,8 @@ function RequestFlow({
                   </motion.ul>
                 )}
               </AnimatePresence>
-              {searchFailed && <p className="mt-2 text-xs text-amber-200/80">Search is unavailable right now — enter it manually.</p>}
+              {searchFailed && !jukebox && <p className="mt-2 text-xs text-amber-200/80">Search is unavailable right now — enter it manually.</p>}
+{!jukebox && (
               <button
                 onClick={() => {
                   setManual(true);
@@ -377,6 +399,8 @@ function RequestFlow({
               >
                 Can't find it? Type it in
               </button>
+              )}
+              {jukebox && library.length === 0 && <p className="mt-3 text-sm text-white/55">The DJ is still loading tonight's songs. Check back in a moment.</p>}
             </div>
           )}
 

@@ -10,6 +10,7 @@ import {
   Headphones,
   LayoutDashboard,
   ListOrdered,
+  Music2,
   Monitor,
   Settings2,
   Sparkles,
@@ -80,6 +81,9 @@ function AdminInner({ backend, snap, status }: { backend: Backend; snap: EventSn
           {snap.settings.demo.enabled && <span className="chip border-amber-300/40 bg-amber-300/10 text-amber-200">DEMO</span>}
           <ConnectionBadge status={status} className="hidden sm:inline-flex" />
           <div className="ml-auto flex items-center gap-2">
+            <Link to={`/player/${eventId}`} className="btn-ghost px-3 py-2 text-sm">
+              <Music2 className="h-4 w-4" /> <span className="hidden md:inline">Jukebox</span>
+            </Link>
             <Link to={`/dj/${eventId}`} className="btn-ghost px-3 py-2 text-sm">
               <Headphones className="h-4 w-4" /> <span className="hidden md:inline">DJ mode</span>
             </Link>
@@ -234,10 +238,11 @@ function ScreenLinks({ eventId }: { eventId: string }) {
     ['Leaderboard', `/leaderboard/${eventId}`, 'Always shows rankings & Wall of Fame'],
     ['Guest page', `/guest/${eventId}`, 'What guests see after scanning'],
     ['DJ mode', `/dj/${eventId}`, 'Simplified booth controls'],
+    ['Jukebox', `/player/${eventId}`, 'Import MP3s and let this laptop play them'],
   ];
   return (
     <Panel title="Screens & links" icon={<ExternalLink className="h-4 w-4 text-cyan" />} className="xl:col-span-2">
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {links.map(([t, href, d]) => (
           <a key={href} href={href} target="_blank" rel="noreferrer" className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3 transition hover:bg-white/[0.06]">
             <div className="flex items-center gap-1.5 text-sm font-semibold">

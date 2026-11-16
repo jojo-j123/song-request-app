@@ -13,6 +13,7 @@ import type {
   EventInfo,
   EventSettings,
   EventSnapshot,
+  LibraryTrack,
   SongRequest,
 } from '../types';
 import { DEFAULT_SETTINGS, DEFAULT_THEME, slugify, uid } from '../utils';
@@ -45,6 +46,7 @@ const mapSettings = (r: any): EventSettings => ({
   totalVotes: r.total_votes,
   guestCount: r.guest_count,
   demo: { ...DEFAULT_SETTINGS.demo, ...(r.demo ?? {}) },
+  jukebox: { ...DEFAULT_SETTINGS.jukebox, ...(r.jukebox ?? {}) },
 });
 
 const settingsToRow = (p: Partial<EventSettings>) => {
@@ -65,6 +67,7 @@ const settingsToRow = (p: Partial<EventSettings>) => {
     totalVotes: 'total_votes',
     guestCount: 'guest_count',
     demo: 'demo',
+    jukebox: 'jukebox',
   };
   const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const [k, v] of Object.entries(p)) row[m[k as keyof EventSettings]] = v;
@@ -87,6 +90,17 @@ const mapRequest = (r: any): SongRequest => ({
   dedicatedTo: r.dedicated_to,
   message: r.message,
   isDemo: r.is_demo,
+  trackId: r.track_id ?? null,
+});
+
+const mapTrack = (r: any): LibraryTrack => ({
+  id: r.id,
+  eventId: r.event_id,
+  title: r.title,
+  artist: r.artist,
+  durationSec: r.duration_sec,
+  artworkUrl: r.artwork_url,
+  fileKey: r.file_key,
 });
 
 const mapCommand = (r: any): DisplayCommand => ({
@@ -116,6 +130,7 @@ interface Cache {
   requests: Map<string, SongRequest>;
   command: DisplayCommand | null;
   battle: Battle | null;
+  library: Map<string, LibraryTrack>;
 }
 
 export function createSupabaseBackend(url: string, key: string): Backend {
@@ -132,7 +147,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
   });
 
   async function fetchAll(eventId: string): Promise<Cache> {
-    const [ev, st, rq, cmd, bt] = await Promise.all([
+    const [ev, st, rq, cmd, bt, lib] = await Promise.all([
       sb.from('events').select('*').eq('id', eventId).maybeSingle(),
       sb.from('event_settings').select('*').eq('event_id', eventId).maybeSingle(),
       sb.from('song_requests').select('*').eq('event_id', eventId).order('queue_position').limit(2000),
@@ -140,6 +155,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
         .order('triggered_at', { ascending: false }).limit(1),
       sb.from('event_moments').select('*').eq('event_id', eventId).eq('moment_type', 'battle')
         .order('triggered_at', { ascending: false }).limit(1),
+      sb.from('library_tracks').select('*').eq('event_id', eventId).order('artist').limit(5000),
     ]);
     const firstErr = ev.error || st.error || rq.error || cmd.error || bt.error;
     if (firstErr) throw firstErr;
@@ -149,6 +165,8 @@ export function createSupabaseBackend(url: string, key: string): Backend {
       requests: new Map((rq.data ?? []).map((r) => [r.id, mapRequest(r)])),
       command: cmd.data?.[0] ? mapCommand(cmd.data[0]) : null,
       battle: bt.data?.[0] ? mapBattle(bt.data[0]) : null,
+      // the library table only exists after migration 0002 — tolerate its absence
+      library: new Map((lib.data ?? []).map((r) => [r.id, mapTrack(r)])),
     };
     caches.set(eventId, c);
     return c;
@@ -156,7 +174,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
 
   const snap = (c: Cache): EventSnapshot | null =>
     c.event && c.settings
-      ? { event: c.event, settings: c.settings, requests: [...c.requests.values()], command: c.command, battle: c.battle }
+      ? { event: c.event, settings: c.settings, requests: [...c.requests.values()], command: c.command, battle: c.battle, library: [...c.library.values()] }
       : null;
 
   async function cache(eventId: string) {
@@ -260,6 +278,9 @@ export function createSupabaseBackend(url: string, key: string): Backend {
             if (row.event_id !== eventId) return;
             c.requests.set(row.id, mapRequest(row));
           }
+        } else if (table === 'library_tracks') {
+          if (p.eventType === 'DELETE') c.library.delete(p.old.id);
+          else if (row && row.event_id === eventId) c.library.set(row.id, mapTrack(row));
         } else if (table === 'event_settings' && row) c.settings = mapSettings(row);
         else if (table === 'events' && row) c.event = mapEvent(row);
         else if (table === 'event_moments') {
@@ -277,7 +298,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
       const connect = () => {
         onStatus?.(everConnected ? 'reconnecting' : 'connecting');
         channel = sb.channel(`event:${eventId}:${uid().slice(0, 6)}`);
-        for (const table of ['song_requests', 'event_settings', 'event_moments']) {
+        for (const table of ['song_requests', 'event_settings', 'event_moments', 'library_tracks']) {
           channel.on('postgres_changes', { event: '*', schema: 'public', table, filter: `event_id=eq.${eventId}` }, (p) =>
             apply(table, p),
           );
@@ -327,6 +348,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
         p_artist: i.artist,
         p_artwork_url: i.artworkUrl ?? null,
         p_client_id: i.clientId,
+        p_track_id: i.trackId ?? null,
         p_dedicated_to: i.dedicatedTo ?? null,
         p_message: i.message ?? null,
       });
@@ -401,6 +423,7 @@ export function createSupabaseBackend(url: string, key: string): Backend {
           case 'updateSettings': {
             const patch = { ...a.patch };
             if (patch.demo) patch.demo = { ...((await cache(eventId)).settings?.demo ?? DEFAULT_SETTINGS.demo), ...patch.demo };
+            if (patch.jukebox) patch.jukebox = { ...((await cache(eventId)).settings?.jukebox ?? DEFAULT_SETTINGS.jukebox), ...patch.jukebox };
             await run(sb.from('event_settings').update(settingsToRow(patch)).eq('event_id', eventId));
             break;
           }
@@ -490,6 +513,47 @@ export function createSupabaseBackend(url: string, key: string): Backend {
               is_demo: true,
             }));
             await run(reqs.insert(rows));
+            break;
+          }
+          case 'importTracks': {
+            const rows = a.tracks.map((t) => ({
+              event_id: eventId,
+              title: t.title.trim().slice(0, 120) || 'Untitled',
+              artist: t.artist.trim().slice(0, 100) || 'Unknown artist',
+              duration_sec: Math.max(0, Math.round(t.durationSec || 0)),
+              artwork_url: t.artworkUrl?.startsWith('https://') ? t.artworkUrl : null,
+              file_key: t.fileKey,
+            }));
+            for (let i = 0; i < rows.length; i += 200)
+              await run(sb.from('library_tracks').upsert(rows.slice(i, i + 200), { onConflict: 'event_id,file_key', ignoreDuplicates: true }));
+            await fetchAll(eventId);
+            break;
+          }
+          case 'removeTrack':
+            await run(sb.from('library_tracks').delete().eq('id', a.id).eq('event_id', eventId));
+            break;
+          case 'clearLibrary':
+            await run(sb.from('library_tracks').delete().eq('event_id', eventId));
+            break;
+          case 'playTrack': {
+            const c = await cache(eventId);
+            const t = c.library.get(a.trackId);
+            if (!t) return { ok: false, code: 'not_found', message: 'Track not in the library.' };
+            await run(reqs.update({ status: 'played' }).eq('event_id', eventId).eq('status', 'playing'));
+            await run(
+              reqs.insert({
+                event_id: eventId,
+                guest_id: 'house',
+                guest_name: 'The House',
+                song_title: t.title,
+                artist: t.artist,
+                artwork_url: t.artworkUrl,
+                status: 'playing',
+                played_at: new Date().toISOString(),
+                queue_position: Math.max(0, ...[...c.requests.values()].map((r) => r.queuePosition)) + 1,
+                track_id: t.id,
+              }),
+            );
             break;
           }
         }

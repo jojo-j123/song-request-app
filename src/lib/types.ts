@@ -35,6 +35,29 @@ export interface DemoConfig {
   autoDj: boolean; // simulator also approves requests & advances songs
 }
 
+/** Jukebox mode: guests pick from the imported library and the laptop plays the files itself. */
+export interface JukeboxConfig {
+  enabled: boolean;
+  /** What plays next: the crowd's top-voted song, or the DJ's queue order. */
+  order: 'votes' | 'queue';
+  /** Run the cinematic countdown on the big screen before each song. */
+  reveal: boolean;
+  /** Keep the music going with a random library song when the queue is empty. */
+  fill: boolean;
+}
+
+/** One imported audio file. Only this metadata is shared; the file itself stays on the player laptop. */
+export interface LibraryTrack {
+  id: string;
+  eventId: string;
+  title: string;
+  artist: string;
+  durationSec: number;
+  artworkUrl: string | null;
+  /** Identifies the file on disk (name|size) so a re-import re-links it. */
+  fileKey: string;
+}
+
 export interface EventSettings {
   votingEnabled: boolean;
   submissionsEnabled: boolean;
@@ -52,6 +75,7 @@ export interface EventSettings {
   totalVotes: number;
   guestCount: number;
   demo: DemoConfig;
+  jukebox: JukeboxConfig;
 }
 
 export interface SongRequest {
@@ -70,6 +94,8 @@ export interface SongRequest {
   dedicatedTo: string | null;
   message: string | null;
   isDemo: boolean;
+  /** Library track this request plays (jukebox mode). */
+  trackId: string | null;
 }
 
 export interface DisplayCommand {
@@ -95,6 +121,7 @@ export interface EventSnapshot {
   requests: SongRequest[];
   command: DisplayCommand | null;
   battle: Battle | null;
+  library: LibraryTrack[];
 }
 
 export interface SubmitInput {
@@ -104,6 +131,7 @@ export interface SubmitInput {
   artist: string;
   artworkUrl?: string | null;
   clientId: string; // idempotency key
+  trackId?: string | null;
   dedicatedTo?: string | null;
   message?: string | null;
 }
@@ -154,7 +182,12 @@ export type AdminAction =
   | { type: 'endBattle' }
   | { type: 'clearBattle' }
   | { type: 'injectRequests'; requests: Array<Omit<SongRequest, 'id' | 'eventId' | 'queuePosition'>> }
-  | { type: 'clearDemo' };
+  | { type: 'clearDemo' }
+  | { type: 'importTracks'; tracks: Array<Omit<LibraryTrack, 'id' | 'eventId'>> }
+  | { type: 'removeTrack'; id: string }
+  | { type: 'clearLibrary' }
+  /** Play a library song that nobody requested (keeps the music going). */
+  | { type: 'playTrack'; trackId: string };
 
 export interface CreateEventInput {
   name: string;

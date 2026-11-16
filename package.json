@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "e2e:jukebox": "node scripts/e2e-jukebox.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.1",

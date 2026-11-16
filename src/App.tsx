@@ -8,6 +8,7 @@ const Guest = lazy(() => import('./pages/Guest'));
 const Display = lazy(() => import('./pages/Display'));
 const Admin = lazy(() => import('./pages/Admin'));
 const DJ = lazy(() => import('./pages/DJ'));
+const Player = lazy(() => import('./pages/Player'));
 
 function Loading() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/request-wall/:eventId" element={<Display forcedMode="wall" />} />
         <Route path="/admin/:eventId" element={<Admin />} />
         <Route path="/dj/:eventId" element={<DJ />} />
+        <Route path="/player/:eventId" element={<Player />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

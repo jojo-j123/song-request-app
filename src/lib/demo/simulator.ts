@@ -40,6 +40,7 @@ function makeRequest(eventId: string, song: [string, string], status: SongReques
     dedicatedTo: dedicate ? pick(DEMO_DEDICATIONS) : null,
     message: null,
     isDemo: true,
+    trackId: null,
     eventId,
   };
 }

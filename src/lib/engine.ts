@@ -10,6 +10,7 @@ import type {
   EventInfo,
   EventSettings,
   EventSnapshot,
+  LibraryTrack,
   SongRequest,
   SubmitInput,
 } from './types';
@@ -25,6 +26,7 @@ export interface LocalEventState {
   event: EventInfo;
   settings: EventSettings;
   requests: SongRequest[];
+  library: LibraryTrack[];
   votes: VoteRecord[];
   guests: string[];
   command: DisplayCommand | null;
@@ -38,14 +40,20 @@ export const LIMITS = { name: 40, title: 120, artist: 100, message: 200 };
 export const QUEUED: SongRequest['status'][] = ['pending', 'approved'];
 
 export function toSnapshot(s: LocalEventState): EventSnapshot {
-  return { event: s.event, settings: s.settings, requests: s.requests, command: s.command, battle: s.battle };
+  return { event: s.event, settings: s.settings, requests: s.requests, command: s.command, battle: s.battle, library: s.library };
 }
 
 export function createState(event: EventInfo, adminPin: string, settings?: Partial<EventSettings>): LocalEventState {
   return {
     event,
-    settings: { ...DEFAULT_SETTINGS, ...settings, demo: { ...DEFAULT_SETTINGS.demo, ...(settings?.demo ?? {}) } },
+    settings: {
+      ...DEFAULT_SETTINGS,
+      ...settings,
+      demo: { ...DEFAULT_SETTINGS.demo, ...(settings?.demo ?? {}) },
+      jukebox: { ...DEFAULT_SETTINGS.jukebox, ...(settings?.jukebox ?? {}) },
+    },
     requests: [],
+    library: [],
     votes: [],
     guests: [],
     command: null,
@@ -78,8 +86,12 @@ export function submitRequest(s: LocalEventState, input: SubmitInput): ActionRes
   if (!s.settings.submissionsEnabled) return fail('submissions_closed', 'Requests are paused right now.');
 
   const guestName = clampText(input.guestName, LIMITS.name);
-  const songTitle = clampText(input.songTitle, LIMITS.title);
-  const artist = clampText(input.artist, LIMITS.artist);
+  // jukebox mode: the song must come from the imported library, and its details are taken from there
+  const track = input.trackId ? s.library.find((t) => t.id === input.trackId) ?? null : null;
+  if (s.settings.jukebox.enabled && !track) return fail('invalid', 'Pick a song from the list.');
+  const songTitle = clampText(track?.title ?? input.songTitle, LIMITS.title);
+  const artist = clampText(track?.artist ?? input.artist, LIMITS.artist);
+  const artwork = track ? track.artworkUrl : input.artworkUrl;
   if (!guestName || !songTitle || !artist || !input.guestId) return fail('invalid', 'Name, song and artist are required.');
 
   const mine = s.requests.filter((r) => r.guestId === input.guestId && r.status !== 'rejected' && !r.isDemo);
@@ -101,7 +113,7 @@ export function submitRequest(s: LocalEventState, input: SubmitInput): ActionRes
     guestName,
     songTitle,
     artist,
-    artworkUrl: input.artworkUrl?.startsWith('https://') ? input.artworkUrl : null,
+    artworkUrl: artwork?.startsWith('https://') ? artwork : null,
     status: s.settings.autoApprove ? 'approved' : 'pending',
     voteCount: 0,
     queuePosition: nextPosition(s),
@@ -110,6 +122,7 @@ export function submitRequest(s: LocalEventState, input: SubmitInput): ActionRes
     dedicatedTo: clampText(input.dedicatedTo, LIMITS.name) || null,
     message: clampText(input.message, LIMITS.message) || null,
     isDemo: false,
+    trackId: track?.id ?? null,
   };
   s.requests.push(req);
   s.clientIds[input.clientId] = req.id;
@@ -238,6 +251,7 @@ export function applyAdmin(s: LocalEventState, a: AdminAction): ActionResult {
         ...s.settings,
         ...a.patch,
         demo: { ...s.settings.demo, ...(a.patch.demo ?? {}) },
+        jukebox: { ...s.settings.jukebox, ...(a.patch.jukebox ?? {}) },
       };
       break;
     case 'updateEvent':
@@ -295,7 +309,7 @@ export function applyAdmin(s: LocalEventState, a: AdminAction): ActionResult {
       break;
     case 'injectRequests': {
       let pos = nextPosition(s);
-      for (const r of a.requests) s.requests.push({ ...r, id: uid(), eventId: s.event.id, queuePosition: pos++ });
+      for (const r of a.requests) s.requests.push({ ...r, trackId: r.trackId ?? null, id: uid(), eventId: s.event.id, queuePosition: pos++ });
       break;
     }
     case 'clearDemo': {
@@ -306,6 +320,55 @@ export function applyAdmin(s: LocalEventState, a: AdminAction): ActionResult {
       s.settings.guestCount = s.guests.length;
       s.settings.totalVotes = s.votes.length;
       if (s.battle && s.battle.requestIds.some((id) => ids.has(id))) s.battle = null;
+      break;
+    }
+    case 'importTracks': {
+      const have = new Set(s.library.map((t) => t.fileKey));
+      for (const t of a.tracks) {
+        if (have.has(t.fileKey)) continue;
+        have.add(t.fileKey);
+        s.library.push({
+          id: uid(),
+          eventId: s.event.id,
+          title: clampText(t.title, LIMITS.title) || 'Untitled',
+          artist: clampText(t.artist, LIMITS.artist) || 'Unknown artist',
+          durationSec: Math.max(0, Math.round(t.durationSec || 0)),
+          artworkUrl: t.artworkUrl?.startsWith('https://') ? t.artworkUrl : null,
+          fileKey: t.fileKey,
+        });
+      }
+      break;
+    }
+    case 'removeTrack':
+      s.library = s.library.filter((t) => t.id !== a.id);
+      for (const r of s.requests) if (r.trackId === a.id) r.trackId = null;
+      break;
+    case 'clearLibrary':
+      s.library = [];
+      for (const r of s.requests) r.trackId = null;
+      break;
+    case 'playTrack': {
+      const t = s.library.find((x) => x.id === a.trackId);
+      if (!t) return fail('not_found');
+      finishPlaying(s);
+      s.requests.push({
+        id: uid(),
+        eventId: s.event.id,
+        guestId: 'house',
+        guestName: 'The House',
+        songTitle: t.title,
+        artist: t.artist,
+        artworkUrl: t.artworkUrl,
+        status: 'playing',
+        voteCount: 0,
+        queuePosition: nextPosition(s),
+        requestedAt: nowIso(),
+        playedAt: nowIso(),
+        dedicatedTo: null,
+        message: null,
+        isDemo: false,
+        trackId: t.id,
+      });
       break;
     }
   }
